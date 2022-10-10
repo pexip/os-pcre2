@@ -1,3 +1,10 @@
+pcre2 (10.36-2+deb11u1) bullseye; urgency=medium
+
+  * Backport upstream fixes for CVE-2022-1586 CVE-2022-1587
+    (Closes: #1011954)
+
+ -- Matthew Vernon <matthew@debian.org>  Sun, 21 Aug 2022 12:15:50 +0100
+
 pcre2 (10.36-2pexip4) pexip-bullseye; urgency=medium
 
   * Bullseye rebuild for ARM64 inclusion
