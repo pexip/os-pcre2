@@ -8,7 +8,7 @@ Build-Depends: debhelper (>=9), dpkg-dev (>= 1.16.1~)
 Vcs-Git: https://salsa.debian.org/debian/pcre2.git
 Vcs-Browser: https://salsa.debian.org/debian/pcre2
 Homepage: https://pcre.org/
-XS-Pexip-Upstream: http://ftp.debian.org/debian/ bullseye
+XS-Pexip-Upstream: http://deb.debian.org/debian/ bookworm
 
 Package: libpcre2-8-0
 Section: libs
