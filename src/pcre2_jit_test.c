@@ -108,7 +108,7 @@ int main(void)
 	pcre2_config_32(PCRE2_CONFIG_JIT, &jit);
 #endif
 	if (!jit) {
-		printf("JIT must be enabled to run pcre_jit_test\n");
+		printf("JIT must be enabled to run pcre2_jit_test\n");
 		return 1;
 	}
 	return regression_tests()
@@ -291,6 +291,7 @@ static struct regression_test_case regression_test_cases[] = {
 	{ MU, A, 0, 0, "(a(?:bc|cb|b|c)+?|ss)+e", "accssabccbcacbccbbXaccssabccbcacbccbbe" },
 	{ MU, A, 0, 0, "(a(?:bc|cb|b|c)+|ss)+?e", "accssabccbcacbccbbXaccssabccbcacbccbbe" },
 	{ MU, A, 0, 0, "(?:(b(c)+?)+)?\?(?:(bc)+|(cb)+)+(?:m)+", "bccbcccbcbccbcbPbccbcccbcbccbcbmmn" },
+	{ MU, A, 0, 0, "(aa|bb){8,1000}", "abaabbaabbaabbaab_aabbaabbaabbaabbaabbaabb_" },
 
 	/* Greedy and non-greedy * operators */
 	{ CMU, A, 0, 0, "(?:AA)*AB", "aaaaaaamaaaaaaab" },
@@ -351,6 +352,9 @@ static struct regression_test_case regression_test_cases[] = {
 	{ MU, A, 0, 0, ".[ab]*a", "xxa" },
 	{ MU, A, 0, 0, ".[ab]?.", "xx" },
 	{ MU, A, 0, 0, "_[ab]+_*a", "_aa" },
+	{ MU, A, 0, 0, "#(A+)#\\d+", "#A#A#0" },
+	{ MU, A, 0, 0, "(?P<size>\\d+)m|M", "4M" },
+	{ M, PCRE2_NEWLINE_CRLF, 0, 0, "\\n?.+#", "\n,\n,#" },
 
 	/* Bracket repeats with limit. */
 	{ MU, A, 0, 0, "(?:(ab){2}){5}M", "abababababababababababM" },
@@ -1201,8 +1205,8 @@ static int regression_tests(void)
 #endif
 
 	/* This test compares the behaviour of interpreter and JIT. Although disabling
-	utf or ucp may make tests fail, if the pcre_exec result is the SAME, it is
-	still considered successful from pcre_jit_test point of view. */
+	utf or ucp may make tests fail, if the pcre2_match result is the SAME, it is
+	still considered successful from pcre2_jit_test point of view. */
 
 #if defined SUPPORT_PCRE2_8
 	pcre2_config_8(PCRE2_CONFIG_JITTARGET, &cpu_info);
