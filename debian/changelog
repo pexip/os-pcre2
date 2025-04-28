@@ -1,3 +1,72 @@
+pcre2 (10.45-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Matthew Vernon <matthew@debian.org>  Wed, 05 Feb 2025 09:25:16 +0000
+
+pcre2 (10.45~rc1-1) experimental; urgency=medium
+
+  * Upstream RC1 for 10.45 version
+
+ -- Matthew Vernon <matthew@debian.org>  Thu, 23 Jan 2025 09:49:13 +0000
+
+pcre2 (10.44-5) unstable; urgency=medium
+
+  * Enable JIT on loong64 (Closes: #1089230)
+
+ -- Matthew Vernon <matthew@debian.org>  Sun, 08 Dec 2024 13:05:09 +0000
+
+pcre2 (10.44-4) unstable; urgency=medium
+
+  * Disable JIT on armel (it requires v7) (Closes: 1087563)
+
+ -- Matthew Vernon <matthew@debian.org>  Fri, 15 Nov 2024 15:53:09 +0000
+
+pcre2 (10.44-3) unstable; urgency=medium
+
+  * Use dh_autoreconf to fix FTBFS on mips64el (Closes: #1087562)
+  * Cherry-pick upstream commit to fix 32-bit issue (Closes: #1087564)
+
+ -- Matthew Vernon <matthew@debian.org>  Fri, 15 Nov 2024 14:47:09 +0000
+
+pcre2 (10.44-2) unstable; urgency=medium
+
+  * Upload to unstable (Closes: #1086187)
+  * Update homepage URL (Closes: #1073087)
+  * Mention libre2-dev in libpcre2-dev description (Closes: #1082901)
+
+ -- Matthew Vernon <matthew@debian.org>  Thu, 14 Nov 2024 11:40:06 +0000
+
+pcre2 (10.44-1) experimental; urgency=medium
+
+  * New upstream version
+
+ -- Matthew Vernon <matthew@debian.org>  Fri, 08 Nov 2024 16:27:46 +0000
+
+pcre2 (10.43-1) experimental; urgency=medium
+
+  * New upstream version
+
+ -- Matthew Vernon <matthew@debian.org>  Sat, 17 Feb 2024 10:22:28 +0000
+
+pcre2 (10.42-4) unstable; urgency=medium
+
+  * Build with JIT support on riscv64 (Closes: #1050819)
+
+ -- Matthew Vernon <matthew@debian.org>  Tue, 29 Aug 2023 18:23:44 +0100
+
+pcre2 (10.42-3) unstable; urgency=medium
+
+  * Specify source format 1.0 explicitly (Closes: #1049910)
+
+ -- Matthew Vernon <matthew@debian.org>  Mon, 21 Aug 2023 11:44:09 +0100
+
+pcre2 (10.42-2) unstable; urgency=medium
+
+  * disable JIT on sparc (Closes: #1034779)
+
+ -- Matthew Vernon <matthew@debian.org>  Tue, 11 Jul 2023 23:11:09 +0100
+
 pcre2 (10.42-1+pexip24u3) pexip-bookworm; urgency=medium
 
   * New versioning scheme
