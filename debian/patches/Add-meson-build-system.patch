@@ -10,12 +10,11 @@ Subject: [PATCH] Add meson build system
  create mode 100644 meson.build
  create mode 100644 meson_options.txt
 
-diff --git a/meson.build b/meson.build
-new file mode 100644
-index 0000000..5591520
+Index: pcre2/meson.build
+===================================================================
 --- /dev/null
-+++ b/meson.build
-@@ -0,0 +1,195 @@
++++ pcre2/meson.build
+@@ -0,0 +1,197 @@
 +project('pcre2', 'c',
 +  license: 'BSD-3',
 +  meson_version: '>=0.49.0',
@@ -41,7 +40,9 @@ index 0000000..5591520
 +  'src/pcre2_auto_possess.c',
 +  chartables,
 +  config_h, pcre2_h,
++  'src/pcre2_chkdint.c',
 +  'src/pcre2_compile.c',
++  'src/pcre2_compile_class.c',
 +  'src/pcre2_config.c',
 +  'src/pcre2_context.c',
 +  'src/pcre2_convert.c',
@@ -211,11 +212,10 @@ index 0000000..5591520
 +    env : ['srcdir=@0@'.format(meson.current_source_dir())],
 +    workdir: meson.current_build_dir())
 +endif
-diff --git a/meson_options.txt b/meson_options.txt
-new file mode 100644
-index 0000000..43eeab5
+Index: pcre2/meson_options.txt
+===================================================================
 --- /dev/null
-+++ b/meson_options.txt
++++ pcre2/meson_options.txt
 @@ -0,0 +1,8 @@
 +option(
 +  'grep', type: 'boolean', value: true,
@@ -225,6 +225,3 @@ index 0000000..43eeab5
 +  'test', type: 'boolean', value: true,
 +  description: 'Compile the test executable and enable tests'
 +)
--- 
-2.34.1
-
