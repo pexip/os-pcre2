@@ -512,7 +512,6 @@ so many of them that they are split into two fields. */
 /* Combinations */
 
 #define CTL_DEBUG            (CTL_FULLBINCODE|CTL_INFO)  /* For setting */
-#define CTL_ANYINFO          (CTL_DEBUG|CTL_BINCODE|CTL_CALLOUT_INFO)
 #define CTL_ANYGLOB          (CTL_ALTGLOBAL|CTL_GLOBAL)
 
 /* Second control word */
@@ -4652,6 +4651,16 @@ fprintf(outfile, "%.*s\n",
 return 0;
 }
 
+/* Backport from 10.47 */
+
+static int callout_enumerate_function_void(pcre2_callout_enumerate_block_8 *cb,
+  void *callout_data)
+{
+(void)cb;
+(void)callout_data;
+return 0;
+}
+
 
 
 /*************************************************
@@ -4671,8 +4680,15 @@ Returns:    PR_OK     continue processing next line
 static int
 show_pattern_info(void)
 {
+int rc_enum;
 uint32_t compile_options, overall_options, extra_options;
 BOOL utf = (FLD(compiled_code, overall_options) & PCRE2_UTF) != 0;
+
+if ((pat_patctl.control & CTL_MEMORY) != 0)
+  show_memory_info();
+
+if ((pat_patctl.control2 & CTL2_FRAMESIZE) != 0)
+  show_framesize();
 
 if ((pat_patctl.control & (CTL_BINCODE|CTL_FULLBINCODE)) != 0)
   {
@@ -5016,17 +5032,17 @@ if ((pat_patctl.control & CTL_INFO) != 0)
     }
   }
 
-if ((pat_patctl.control & CTL_CALLOUT_INFO) != 0)
+PCRE2_CALLOUT_ENUMERATE(rc_enum,
+  (((pat_patctl.control & CTL_CALLOUT_INFO) != 0)? callout_callback :
+  /* Exercise the callout enumeration code with a dummy callback to make sure
+  it works. */
+  callout_enumerate_function_void), 0);
+if (rc_enum != 0)
   {
-  int errorcode;
-  PCRE2_CALLOUT_ENUMERATE(errorcode, callout_callback, 0);
-  if (errorcode != 0)
-    {
-    fprintf(outfile, "Callout enumerate failed: error %d: ", errorcode);
-    if (errorcode < 0 && !print_error_message(errorcode, "", "\n"))
-      return PR_ABEND;
-    return PR_SKIP;
-    }
+  fprintf(outfile, "Callout enumerate failed: error %d: ", rc_enum);
+  if (rc_enum < 0 && !print_error_message(rc_enum, "", "\n"))
+    return PR_ABEND;
+  return PR_SKIP;
   }
 
 return PR_OK;
@@ -5230,13 +5246,9 @@ switch(cmd)
     {
     PCRE2_JIT_COMPILE(jitrc, compiled_code, pat_patctl.jit);
     }
-  if ((pat_patctl.control & CTL_MEMORY) != 0) show_memory_info();
-  if ((pat_patctl.control2 & CTL2_FRAMESIZE) != 0) show_framesize();
-  if ((pat_patctl.control & CTL_ANYINFO) != 0)
-    {
-    rc = show_pattern_info();
-    if (rc != PR_OK) return rc;
-    }
+
+  rc = show_pattern_info();
+  if (rc != PR_OK) return rc;
   break;
 
   /* Save the stack of compiled patterns to a file, then empty the stack. */
@@ -5395,13 +5407,17 @@ BOOL utf;
 uint32_t k;
 uint8_t *p = buffer;
 unsigned int delimiter = *p++;
-int errorcode;
+int rc, errorcode;
 void *use_pat_context;
 void *use_pbuffer = NULL;
 uint32_t use_forbid_utf = forbid_utf;
 PCRE2_SIZE patlen;
 PCRE2_SIZE valgrind_access_length;
 PCRE2_SIZE erroroffset;
+int32_t serialize_rc;
+void *serialize_code;
+uint8_t *serialized_bytes;
+PCRE2_SIZE serialized_size;
 
 /* The perltest.sh script supports only / as a delimiter. */
 
@@ -5724,7 +5740,6 @@ local character tables. Neither does it have 16-bit or 32-bit support. */
 if ((pat_patctl.control & CTL_POSIX) != 0)
   {
 #ifdef SUPPORT_PCRE2_8
-  int rc;
   int cflags = 0;
   const char *msg = "** Ignored with POSIX interface:";
 #endif
@@ -5931,7 +5946,6 @@ ends up back in the usual place. */
 
 if (pat_patctl.convert_type != CONVERT_UNSET)
   {
-  int rc;
   int convert_return = PR_OK;
   uint32_t convert_options = pat_patctl.convert_type;
   void *converted_pattern;
@@ -6246,13 +6260,31 @@ if ((pat_patctl.control2 & CTL2_NL_SET) != 0)
 
 /* Output code size and other information if requested. */
 
-if ((pat_patctl.control & CTL_MEMORY) != 0) show_memory_info();
-if ((pat_patctl.control2 & CTL2_FRAMESIZE) != 0) show_framesize();
-if ((pat_patctl.control & CTL_ANYINFO) != 0)
+rc = show_pattern_info();
+if (rc != PR_OK) return rc;
+
+/* Verify that the compiled structure can be serialized without generating
+memory errors. */
+
+serialize_code = PTR(compiled_code);
+PCRE2_SERIALIZE_ENCODE(serialize_rc, &serialize_code, 1, &serialized_bytes,
+  &serialized_size, general_context);
+if (serialize_rc != 1)
   {
-  int rc = show_pattern_info();
-  if (rc != PR_OK) return rc;
+  fprintf(outfile, "** pcre2_serialize_encode() returned %d instead of 1\n",
+    serialize_rc);
+  return PR_ABEND;
   }
+
+#if defined SUPPORT_VALGRIND
+if (VALGRIND_CHECK_MEM_IS_DEFINED(serialized_bytes, serialized_size) != 0)
+  {
+  fprintf(outfile, "** pcre2_serialize_encode() returned undefined data\n");
+  return PR_ABEND;
+  }
+#endif
+
+PCRE2_SERIALIZE_FREE(serialized_bytes);
 
 /* The "push" control requests that the compiled pattern be remembered on a
 stack. This is mainly for testing the serialization functionality. */
@@ -6389,7 +6421,8 @@ for (;;)
       PTR(dat_context), dfa_workspace, DFA_WS_DIMENSION);
     }
 
-  else if ((pat_patctl.control & CTL_JITFAST) != 0)
+  else if ((pat_patctl.control & CTL_JITFAST) != 0 &&
+           (dat_datctl.options & PCRE2_NO_JIT) == 0)
     PCRE2_JIT_MATCH(capcount, compiled_code, pp, ulen, dat_datctl.offset,
       dat_datctl.options, match_data, PTR(dat_context));
 
@@ -7989,7 +8022,8 @@ if (dat_datctl.replacement[0] != 0)
 
   if (emoption != 0)
     {
-    if ((pat_patctl.control & CTL_JITFAST) != 0)
+    if ((pat_patctl.control & CTL_JITFAST) != 0 &&
+        (dat_datctl.options & PCRE2_NO_JIT) == 0)
       {
       PCRE2_JIT_MATCH(rc, compiled_code, pp, arg_ulen, dat_datctl.offset,
         dat_datctl.options, match_data, use_dat_context);
@@ -8208,7 +8242,8 @@ for (gmatched = 0;; gmatched++)
         }
       }
 
-    else if ((pat_patctl.control & CTL_JITFAST) != 0)
+    else if ((pat_patctl.control & CTL_JITFAST) != 0 &&
+             (dat_datctl.options & PCRE2_NO_JIT) == 0)
       {
       start_time = clock();
       for (i = 0; i < timeitm; i++)
@@ -8305,7 +8340,8 @@ for (gmatched = 0;; gmatched++)
       }
     else
       {
-      if ((pat_patctl.control & CTL_JITFAST) != 0)
+      if ((pat_patctl.control & CTL_JITFAST) != 0 &&
+          (dat_datctl.options & PCRE2_NO_JIT) == 0)
         PCRE2_JIT_MATCH(capcount, compiled_code, pp, arg_ulen, dat_datctl.offset,
           dat_datctl.options | g_notempty, match_data, use_dat_context);
       else
@@ -8353,20 +8389,29 @@ for (gmatched = 0;; gmatched++)
     /* If PCRE2_COPY_MATCHED_SUBJECT was set, check that things are as they
     should be, but not for fast JIT, where it isn't supported. */
 
-    if ((dat_datctl.options & PCRE2_COPY_MATCHED_SUBJECT) != 0 &&
-        (pat_patctl.control & CTL_JITFAST) == 0)
+    if ((dat_datctl.options & PCRE2_COPY_MATCHED_SUBJECT) != 0)
       {
-      if ((FLD(match_data, flags) & PCRE2_MD_COPIED_SUBJECT) == 0)
-        fprintf(outfile,
-          "** PCRE2 error: flag not set after copy_matched_subject\n");
+      if ((pat_patctl.control & CTL_JITFAST) != 0 &&
+          (dat_datctl.options & PCRE2_NO_JIT) == 0)
+        {
+        if ((FLD(match_data, flags) & PCRE2_MD_COPIED_SUBJECT) != 0)
+          fprintf(outfile,
+            "** PCRE2 error: flag set after unsupported copy_matched_subject\n");
+        }
+      else
+        {
+        if ((FLD(match_data, flags) & PCRE2_MD_COPIED_SUBJECT) == 0)
+          fprintf(outfile,
+            "** PCRE2 error: flag not set after copy_matched_subject\n");
 
-      if (CASTFLD(const void *, match_data, subject) == pp)
-        fprintf(outfile,
-          "** PCRE2 error: copy_matched_subject has not copied\n");
+        if (CASTFLD(const void *, match_data, subject) == pp)
+          fprintf(outfile,
+            "** PCRE2 error: copy_matched_subject has not copied\n");
 
-      if (memcmp(CASTFLD(const void *, match_data, subject), pp, ulen) != 0)
-        fprintf(outfile,
-          "** PCRE2 error: copy_matched_subject mismatch\n");
+        if (memcmp(CASTFLD(const void *, match_data, subject), pp, ulen) != 0)
+          fprintf(outfile,
+            "** PCRE2 error: copy_matched_subject mismatch\n");
+        }
       }
 
     /* If this is not the first time round a global loop, check that the

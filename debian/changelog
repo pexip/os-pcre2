@@ -1,3 +1,9 @@
+pcre2 (10.46-1~deb13u2) trixie; urgency=high
+
+  * Use upstream backports of security fixes from 10.48
+
+ -- Matthew Vernon <matthew@debian.org>  Tue, 01 Sep 2026 11:46:58 +0100
+
 pcre2 (10.46-1~deb13u1) trixie; urgency=high
 
   * New upstream release to fix CVE-2025-58050 (Closes: #1112278)
