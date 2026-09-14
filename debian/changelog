@@ -1,3 +1,15 @@
+pcre2 (10.46-1~deb13u2+pexip25u1) pexip-trixie; urgency=medium
+
+  * New upstream release with security fixes
+
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Mon, 14 Sep 2026 11:59:54 +0100
+
+pcre2 (10.46-1~deb13u2) trixie; urgency=high
+
+  * Use upstream backports of security fixes from 10.48
+
+ -- Matthew Vernon <matthew@debian.org>  Tue, 01 Sep 2026 11:46:58 +0100
+
 pcre2 (10.46-1~deb13u1+pexip25u2) pexip-trixie; urgency=medium
 
   * Trixie build for product distribution

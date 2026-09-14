@@ -6107,6 +6107,7 @@ while (TRUE)
       repeat = GET2(cc, 1);
       if (repeat <= 0)
         {
+        repeat = 1;
         chars_end = chars;
         continue;
         }
@@ -12230,6 +12231,8 @@ else if (SLJIT_UNLIKELY(opcode == OP_ASSERT_SCS))
   if (common->restore_end_ptr == 0)
     common->restore_end_ptr = private_data_ptr + sizeof(sljit_sw);
   }
+else if (SLJIT_UNLIKELY(opcode == OP_ASSERTBACK_NA) && PRIVATE_DATA(ccbegin + 1))
+  OP1(SLJIT_MOV, STR_END, 0, SLJIT_MEM1(SLJIT_SP), private_data_ptr);
 
 if (SLJIT_UNLIKELY(opcode == OP_ONCE))
   {
