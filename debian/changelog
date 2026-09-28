@@ -1,3 +1,11 @@
+pcre2 (10.46-1~deb13u3) trixie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * GHSA-r9hj-j2rw-4q3m: Fix large JIT stack allocation (Closes: #1149217)
+  * For release, revert platform-specific test case
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Mon, 28 Sep 2026 16:07:53 +0200
+
 pcre2 (10.46-1~deb13u2) trixie; urgency=high
 
   * Use upstream backports of security fixes from 10.48
